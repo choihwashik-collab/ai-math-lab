@@ -109,8 +109,13 @@ function dispatch_(req) {
     const questions = questions_(req.questions);
     if (JSON.stringify(questions).length > 40000) throw new Error('설문 내용이 너무 깁니다. 질문과 선택지를 줄여 주세요.');
     const existing = new Set(s.rooms.getDataRange().getValues().slice(1).map(r => String(r[0])));
-    let code;
-    do { code = String(Math.floor(100000 + Math.random() * 900000)); } while (existing.has(code));
+    let code = String(req.preferredCode || '');
+    if (code) {
+      if (!/^\d{6}$/.test(code)) throw new Error('가져올 방 번호를 확인해 주세요.');
+      if (existing.has(code)) throw new Error('이미 서버에 있는 방 번호입니다. 기존 참여 링크를 사용해 주세요.');
+    } else {
+      do { code = String(Math.floor(100000 + Math.random() * 900000)); } while (existing.has(code));
+    }
     const room = { code, title, questions, ownerToken: Utilities.getUuid() + Utilities.getUuid(),
       status: 'open', createdAt: Date.now(), expiresAt: null, revision: 1 };
     s.rooms.appendRow([code, JSON.stringify(room), '', '']);

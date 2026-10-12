@@ -225,14 +225,19 @@ footer { font-size: 13px !important; }
   const memory = new Map();
   const read = k => { try { return localStorage.getItem(k) || memory.get(k); } catch { return memory.get(k); } };
   const store = (k,v) => { memory.set(k,v); try { localStorage.setItem(k,v); } catch {} };
-  let room, ownerToken = '', studentName = '', participantId = '', responses = [], timer, view = 'home', polling = false;
-  const notice = text => $('#connection-status').textContent = text;
+  let room, ownerToken = '', studentName = '', participantId = '', responses = [], timer, view = 'home', polling = false, migrationCode = '';
+  const notice = text => {
+    $('#connection-status').textContent = text;
+    $('#join-error').textContent = view === 'home' ? text : '';
+  };
   function show(next) { view = next; views.forEach(v => $(`#${v}-view`).hidden = v !== view); clearTimeout(timer); schedule(); }
   function rpc(action, data = {}) {
     return new Promise((resolve,reject) => {
       if (!hosted) return reject(new Error('설문 서버가 아직 연결되지 않았습니다.'));
-      google.script.run.withSuccessHandler(r => r?.ok ? resolve(r.data) : reject(new Error(r?.error || '서버 응답 오류입니다.')))
-        .withFailureHandler(() => reject(new Error('서버 연결에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.')))
+      const timeout = setTimeout(() => reject(new Error('서버 응답이 늦어지고 있습니다. 잠시 후 다시 시도해 주세요.')),30000);
+      const succeed = result => { clearTimeout(timeout); result?.ok ? resolve(result.data) : reject(new Error(result?.error || '서버 응답 오류입니다.')); };
+      google.script.run.withSuccessHandler(succeed)
+        .withFailureHandler(() => {clearTimeout(timeout);reject(new Error('서버 연결에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.'));})
         .surveyApi({ action, ...data });
     });
   }
@@ -240,9 +245,9 @@ footer { font-size: 13px !important; }
   function action(selector, fn) {
     const button = $(selector);
     button.addEventListener('click',async () => {
-      if (button.disabled) return; button.disabled = true; notice('처리 중…');
+      if (button.disabled) return; button.disabled = true; const label = button.textContent; button.textContent = '처리 중…'; notice('처리 중…');
       try { await fn(); notice(''); } catch(e) { notice(e.message); }
-      finally { button.disabled = false; if (room?.status === 'closed') $('#end-room').disabled = $('#add-live').disabled = true; }
+      finally { button.textContent = label; button.disabled = false; if (room?.status === 'closed') $('#end-room').disabled = $('#add-live').disabled = true; }
     });
   }
   function question(type='choice',text='') { return {id:uid(),type,text,options:type==='choice'?['매우 그렇다','그렇다','아니다']:[]}; }
@@ -311,7 +316,7 @@ footer { font-size: 13px !important; }
   for(const [selector,type] of [['#add-choice','choice'],['#add-text','text']])action(selector,async()=>{if(room.questions.length>=30)throw new Error('질문은 최대 30개입니다.');room.questions.push(question(type));renderBuilder();});
   action('#create-room',async()=>{
     const title=$('#survey-title').value.trim();if(!title||!room.questions.length||room.questions.some(q=>!q.text.trim()))throw new Error('제목과 모든 질문을 작성해 주세요.');
-    const data=await rpc('create',{title,questions:room.questions,pin:$('#creator-pin').value});room=data.room;ownerToken=data.ownerToken;responses=[];
+    const data=await rpc('create',{title,questions:room.questions,pin:$('#creator-pin').value,preferredCode:migrationCode});room=data.room;ownerToken=data.ownerToken;responses=[];migrationCode='';
     store(`survey-owner-${room.code}`,ownerToken);$('#creator-pin').value='';renderTeacher();show('teacher');
   });
   action('#join-room',async()=>{
@@ -332,10 +337,25 @@ footer { font-size: 13px !important; }
   action('#add-live',async()=>{const text=$('#live-question').value.trim();if(!text)throw new Error('추가할 질문을 입력해 주세요.');const data=await request('addQuestion',{text});room=data.room;$('#live-question').value='';renderResults();});
   async function initialize() {
     if(!hosted){
-      if(/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(config.appUrl||'')){const dest=new URL(config.appUrl);dest.search=location.search;dest.hash=location.hash;location.replace(dest.href);return;}
+      if(/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(config.appUrl||'')){
+        const legacy=[];
+        try {for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(!key.startsWith('aimath-survey-room-'))continue;try {const r=JSON.parse(localStorage.getItem(key));if(r&&/^\d{6}$/.test(String(r.code))&&Array.isArray(r.questions)&&r.questions.length)legacy.push(r);}catch{}}}catch{}
+        const dest=new URL(config.appUrl);dest.search=location.search;dest.hash=location.hash;
+        if(legacy.length){
+          show('home');const box=$('#home-view');box.replaceChildren();
+          const article=document.createElement('article');article.className='entry';
+          const heading=document.createElement('h2');heading.textContent='이전에 만든 설문 옮기기';article.append(heading);
+          const explanation=document.createElement('p');explanation.textContent='이 브라우저에만 저장된 설문입니다. 제목과 질문을 Google 서버로 옮겨 기존 방 번호를 사용할 수 있습니다. 이전 응답은 이 브라우저에 남습니다.';article.append(explanation);
+          for(const old of legacy){const b=document.createElement('button');b.textContent=`${old.code} · ${old.title} 옮기기`;b.onclick=()=>{const payload=JSON.stringify({code:String(old.code),title:old.title,questions:old.questions});if(payload.length>20000){notice('설문이 너무 깁니다. 새 서버에서 질문을 다시 작성해 주세요.');return;}const url=new URL(config.appUrl);url.hash='import='+encodeURIComponent(payload);location.assign(url.href);};article.append(b);}
+          const next=document.createElement('a');next.href=dest.href;next.textContent='새 설문 서버로 바로 이동 →';next.style.display='block';next.style.marginTop='20px';article.append(next);box.append(article);notice('방을 만든 브라우저에서 설문을 선택한 뒤 설문 만들기 암호를 입력해 주세요.');return;
+        }
+        location.replace(dest.href);return;
+      }
       $('#open-builder').disabled=$('#join-room').disabled=true;notice('설문 서버 연결을 준비 중입니다. 기존 브라우저에만 저장된 설문방은 휴대폰에서 입장할 수 없습니다.');show('home');return;
     }
     const initial=await new Promise(resolve=>google.script.url.getLocation(resolve));
+    const imported=new URLSearchParams(initial.hash).get('import');
+    if(imported){const legacy=JSON.parse(imported);if(!/^\d{6}$/.test(String(legacy.code))||!Array.isArray(legacy.questions))throw new Error('설문 가져오기 정보를 확인해 주세요.');migrationCode=String(legacy.code);room={questions:legacy.questions.map(q=>question(q.type,q.text))};room.questions.forEach((q,i)=>q.options=legacy.questions[i].options||[]);$('#survey-title').value=legacy.title||'이전 설문';renderBuilder();show('builder');notice(`${migrationCode}번 설문을 서버에 옮기려면 설문 만들기 암호를 입력하고 방 만들기를 누르세요.`);return;}
     const code=config.initialRoom||initial.parameter.room,mode=config.initialMode||initial.parameter.mode;show('home');if(!code)return;
     $('#join-code').value=code;
     if(mode==='teacher'){ownerToken=new URLSearchParams(initial.hash).get('token')||read(`survey-owner-${code}`)||'';const data=await rpc('results',{code,ownerToken});room=data.room;responses=data.responses;store(`survey-owner-${code}`,ownerToken);renderTeacher();show('teacher');}

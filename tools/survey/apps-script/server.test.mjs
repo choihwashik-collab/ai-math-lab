@@ -84,3 +84,11 @@ test('participant answers are validated; manual deletion removes room and respon
   assert.equal(s.call('delete',{code,ownerToken}).ok,true);
   assert.equal(s.rooms.rows.length,1);assert.equal(s.responses.rows.length,1);
 });
+
+test('legacy migration keeps the original room code and rejects collisions',()=>{
+  const s=server();
+  const args={pin:'private-test-pin',title:'이전 설문',preferredCode:'670874',questions:[{type:'text',text:'의견'}]};
+  const created=s.call('create',args);assert.equal(created.ok,true);assert.equal(created.data.room.code,'670874');
+  assert.equal(s.call('join',{code:'670874'}).data.room.title,'이전 설문');
+  assert.equal(s.call('create',args).ok,false);
+});
