@@ -7,7 +7,7 @@ AI MATH LAB 설문 전용 Apps Script 배포
 2. Code.gs 파일을 이 폴더의 Code.gs 내용으로 교체합니다.
 3. HTML 파일을 추가하고 이름을 Index로 지정한 뒤 Index.html 내용을 붙여넣습니다.
 4. 프로젝트 설정에서 appsscript.json 표시를 켜고 이 폴더의 manifest 내용으로 교체합니다.
-5. 함수 선택에서 setupSurveyBackend_를 선택해 한 번 실행하고 권한을 승인합니다.
+5. 함수 선택에서 setupSurveyBackend를 선택해 한 번 실행하고 권한을 승인합니다.
    이 프로젝트는 새 설문 응답 시트를 만들고 정리용 시간 트리거를 설치합니다.
    실행 로그에서 '설문 만들기 암호'와 응답 시트 주소를 확인합니다.
    암호는 공개 저장소나 참여자에게 공유하지 않습니다.

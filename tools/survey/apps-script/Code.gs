@@ -2,6 +2,15 @@
 const DAY_ = 86400000;
 const HEADERS_ = ['code', 'roomJson', 'participantId', 'responseJson'];
 
+// Editor entry point. Anonymous web visitors cannot initialize or read secrets.
+function setupSurveyBackend() {
+  const active = Session.getActiveUser().getEmail();
+  if (!active || active !== Session.getEffectiveUser().getEmail()) {
+    throw new Error('프로젝트 소유자만 초기화할 수 있습니다.');
+  }
+  setupSurveyBackend_();
+}
+
 function setupSurveyBackend_() {
   const props = PropertiesService.getScriptProperties();
   if (!props.getProperty('SURVEY_SHEET_ID')) {
