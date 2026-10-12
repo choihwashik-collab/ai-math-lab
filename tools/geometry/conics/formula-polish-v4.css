@@ -1,0 +1,73 @@
+.preset-row-v4 button .katex {
+  font-size: 1.04em;
+}
+
+.preset-row-v4 button > span:first-child {
+  margin-right: 0.3rem;
+}
+
+.inline-math-v4 {
+  display: inline-block;
+  margin: 0 0.14rem;
+  color: #172139;
+  vertical-align: -0.04em;
+}
+
+.inline-math-v4 .katex {
+  font-size: 1.04em;
+}
+
+.math-card .formula {
+  display: grid;
+  min-height: 72px;
+  place-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 16px 8px;
+}
+
+.math-card .formula .katex {
+  max-width: 100%;
+  font-size: 1.02em;
+}
+
+.math-card .formula .katex-display {
+  margin: 0;
+}
+
+#tangent-text .inline-math-v4 {
+  vertical-align: -0.08em;
+}
+
+.curve-parameters-v4[hidden],
+#parabola-parameters-v4[hidden] {
+  display: none !important;
+}
+
+.parameter-fact-v4 {
+  min-height: 25px;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border-left: 3px solid #008f83;
+  border-radius: 0 7px 7px 0;
+  background: #f0f8f7;
+  color: #173e43;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.parameter-fact-v4:empty {
+  display: none;
+}
+
+[data-math-v4] {
+  display: inline-block;
+  margin-left: 0.12rem;
+  color: #172139;
+}
+
+@media (max-width: 640px) {
+  .curve-parameters-v4 .preset-row-v4 button {
+    flex: 1 1 100%;
+  }
+}

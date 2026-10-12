@@ -1,0 +1,11 @@
+.DS_Store
+Thumbs.db
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+
+# Local textbook reference material (not required by the web app)
+/교과서/
+/기하교과서/

@@ -1,0 +1,409 @@
+.cone-lab-v5 {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.82fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.cone-stage-card-v5,
+.cone-proof-card-v5 {
+  border: 1px solid #c6d5dc;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(24, 47, 66, 0.09);
+}
+
+.cone-stage-card-v5 {
+  overflow: hidden;
+}
+
+#cone-three-v5 {
+  position: relative;
+  height: 560px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 66% 24%, rgba(180, 231, 224, 0.4), transparent 32%),
+    linear-gradient(155deg, #fafdfe 0%, #eef5f6 100%);
+  cursor: grab;
+  touch-action: none;
+}
+
+#cone-three-v5:active {
+  cursor: grabbing;
+}
+
+#cone-three-v5 canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  background: transparent;
+}
+
+.cone-label-layer-v5 {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.cone-label-v5 {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 4px 7px;
+  border: 1px solid rgba(190, 205, 211, 0.85);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #172139;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(23, 33, 57, 0.12);
+}
+
+.cone-label-v5 .katex {
+  font-size: 1.04em;
+}
+
+.cone-drag-hint-v5 {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 4;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: rgba(23, 33, 57, 0.86);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.cone-legend-v5 {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  padding: 12px 17px 5px;
+  color: #3d5064;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cone-legend-v5 span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cone-legend-v5 i {
+  width: 18px;
+  height: 4px;
+  border-radius: 4px;
+}
+
+.legend-curve-v5 { background: #00a897; }
+.legend-plane-v5 { background: #4faea7; opacity: 0.55; }
+.legend-sphere-v5 { background: #e3a33b; }
+.legend-proof-v5 { background: linear-gradient(90deg, #d56b37 0 50%, #6a52bc 50%); }
+
+.cone-stage-controls-v5 {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 13px 16px;
+  align-items: end;
+  padding: 12px 17px 17px;
+}
+
+.cone-type-buttons-v6 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 17px 0;
+}
+
+.cone-type-buttons-v6 button {
+  min-height: 42px;
+  border: 1px solid #bfcfd5;
+  border-radius: 9px;
+  background: #fff;
+  color: #34475d;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cone-type-buttons-v6 button:hover {
+  border-color: #70bcb4;
+  background: #eef9f7;
+}
+
+.cone-type-buttons-v6 button.active {
+  border-color: #008f83;
+  background: #e3f6f2;
+  color: #006c63;
+  box-shadow: inset 0 -3px 0 #008f83;
+}
+
+.cone-step-buttons-v5 {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.cone-step-buttons-v5 button,
+#cone-reset-view-v5 {
+  min-height: 40px;
+  border: 1px solid #c5d2d8;
+  border-radius: 8px;
+  background: #f7fafb;
+  color: #34475d;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cone-step-buttons-v5 button:hover,
+#cone-reset-view-v5:hover {
+  border-color: #78bbb5;
+  background: #eef9f7;
+}
+
+.cone-view-actions-v6 {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.cone-view-actions-v6 button {
+  padding: 8px 11px;
+}
+
+.cone-visibility-switch-v7 {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 11px;
+  border: 1px solid #c5d2d8;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #fff, #f6f9fa);
+  color: #34475d;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(24, 47, 66, 0.06);
+}
+
+.cone-visibility-switch-v7:hover {
+  border-color: #84bdb7;
+}
+
+.cone-visibility-switch-v7 input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.cone-switch-track-v7 {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex: 0 0 36px;
+  border-radius: 999px;
+  background: #c9d4d8;
+  transition: background 160ms ease;
+}
+
+.cone-switch-track-v7 i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(23, 33, 57, 0.25);
+  transition: transform 160ms ease;
+}
+
+.cone-visibility-switch-v7 input:checked + .cone-switch-track-v7 {
+  background: #008f83;
+}
+
+.cone-visibility-switch-v7 input:checked + .cone-switch-track-v7 i {
+  transform: translateX(16px);
+}
+
+.cone-visibility-switch-v7 input:focus-visible + .cone-switch-track-v7 {
+  box-shadow: 0 0 0 3px rgba(0, 143, 131, 0.2);
+}
+
+.cone-switch-copy-v7 {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+}
+
+.cone-switch-copy-v7 b,
+.cone-switch-copy-v7 em {
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.cone-switch-copy-v7 em {
+  color: #688;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.cone-step-buttons-v5 button.active {
+  border-color: #172139;
+  background: #172139;
+  color: #fff;
+}
+
+.cone-point-control-v5 {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #34475d;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.cone-point-control-v5 input {
+  width: 100%;
+  accent-color: #008f83;
+}
+
+.cone-proof-card-v5 {
+  padding: 25px 22px;
+  background: linear-gradient(155deg, #f8fffd, #edf8f6);
+  border-color: #b9d8d4;
+}
+
+.cone-proof-card-v5 .label {
+  margin: 0 0 10px;
+  color: #00786e;
+  font: 800 14px 'DM Mono', monospace;
+  letter-spacing: 0.6px;
+}
+
+.cone-step-count-v5 {
+  margin: 0 0 8px;
+  color: #6851bd;
+  font: 800 14px 'DM Mono', monospace;
+}
+
+.cone-proof-card-v5 h3 {
+  margin: 0 0 12px;
+  color: #172139;
+  font-size: 23px;
+  line-height: 1.42;
+}
+
+#cone-proof-text-v5 {
+  min-height: 92px;
+  margin: 0;
+  color: #314b5a;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.78;
+}
+
+.cone-proof-formula-v5 {
+  margin: 16px 0;
+  padding: 14px 10px;
+  border: 1px solid #d3dedf;
+  border-left: 4px solid #008f83;
+  border-radius: 9px;
+  background: #fff;
+  color: #503c9d;
+  font-size: 17px;
+  text-align: center;
+}
+
+.cone-distance-values-v5 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 16px;
+}
+
+.cone-distance-values-v5[hidden] {
+  display: none;
+}
+
+.cone-distance-values-v5 > span {
+  padding: 9px 5px;
+  border-radius: 7px;
+  background: #fff;
+  color: #1e4348;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.cone-proof-chain-v5 {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cone-proof-chain-v5 li {
+  padding: 11px 12px;
+  border-left: 3px solid #cbd7db;
+  border-radius: 0 8px 8px 0;
+  background: rgba(255, 255, 255, 0.64);
+  opacity: 0.56;
+  transition: opacity 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.cone-proof-chain-v5 li.active {
+  border-left-color: #008f83;
+  background: #fff;
+  opacity: 1;
+}
+
+.cone-proof-chain-v5 li > b,
+.cone-proof-chain-v5 li > span {
+  display: block;
+  color: #24394d;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.cone-proof-chain-v5 li > span {
+  margin-top: 4px;
+  color: #5a4aa0;
+  min-height: 28px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.cone-proof-chain-v5 .katex,
+.cone-proof-chain-v5 .katex * { white-space: nowrap; }
+
+.cone-legacy-v5 {
+  display: none !important;
+}
+
+@media (max-width: 930px) {
+  .cone-lab-v5 { grid-template-columns: 1fr; }
+  #cone-three-v5 { height: 500px; }
+  #cone-proof-text-v5 { min-height: 0; }
+}
+
+@media (max-width: 600px) {
+  #cone-three-v5 { height: 430px; }
+  .cone-type-buttons-v6 { grid-template-columns: 1fr; }
+  .cone-step-buttons-v5 { grid-template-columns: 1fr 1fr; }
+  .cone-stage-controls-v5 { grid-template-columns: 1fr; }
+  .cone-view-actions-v6 { justify-content: stretch; }
+  .cone-view-actions-v6 button { flex: 1; }
+  .cone-distance-values-v5 { grid-template-columns: 1fr; }
+}

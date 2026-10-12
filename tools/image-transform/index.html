@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>이미지 행렬 실습 | AI MATH LAB</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="../../theme.css?v=1" />
+  </head>
+  <body>
+    <header><a href="../../index.html" class="brand"><b>∑</b> AI MATH <em>LAB</em></a><span>활동 03 · 이미지 데이터 처리</span><a class="exit" href="../../index.html">대시보드로 <i>↗</i></a></header>
+    <main>
+      <section class="intro"><div><p class="eyebrow">IMAGE MATRIX LAB</p><h1>이미지를 <strong>행렬</strong>로<br />변환하고 움직여 보세요.</h1><p>한 칸의 밝기는 하나의 수입니다. 픽셀 행렬과 변환 행렬을 직접 조작하며 이미지 처리의 수학을 탐구해 봅시다.</p></div><div class="goal"><span>오늘의 핵심</span><b>행렬 · 합성곱 · 좌표 변환</b><small>동아출판 「이미지 데이터 처리」 단원 기반</small></div></section>
+      <section class="workbench">
+        <aside class="steps"><p>ACTIVITY FLOW</p><button class="step active" data-step="draw"><b>01</b><span>이미지 만들기<small>픽셀 행렬 입력</small></span></button><button class="step" data-step="light"><b>02</b><span>밝기·흐림<small>행렬 연산과 합성곱</small></span></button><button class="step" data-step="move"><b>03</b><span>이동·대칭<small>변환 행렬 곱셈</small></span></button><div class="hint"><b>TIP</b><p>그리드의 칸을 클릭하면 밝기값이 0 → 255로 바뀝니다.</p></div></aside>
+        <div class="lab">
+          <div class="lab-head"><div><p class="eyebrow">STEP <span id="step-number">01</span></p><h2 id="step-title">픽셀 이미지 만들기</h2></div><button id="reset" class="subtle">기본 이미지 ↺</button></div>
+          <div class="stage">
+            <section class="image-panel"><div class="panel-label"><span>입력 이미지 A</span><small>8 × 8 밝기 행렬</small></div><div id="source-grid" class="pixel-grid" aria-label="입력 이미지 그리드"></div><p class="grid-note">검정 <i></i> 0 &nbsp; 밝음 <i class="bright"></i> 255</p></section>
+            <div class="operator"><span id="operator-symbol">+</span><small id="operator-note">밝기값</small></div>
+            <section id="operator-panel" class="operator-panel"><div class="panel-label"><span>밝기 조절</span><small>상수 덧셈</small></div><label>밝기값 <output id="brightness-value">40</output><input id="brightness" type="range" min="-150" max="150" value="40" /></label><p class="formula">B = clip(A + <b id="constant-view">40</b>)</p></section>
+            <div class="operator equals">=</div>
+            <section class="image-panel result"><div class="panel-label"><span>결과 이미지 B</span><small id="result-label">밝기 변환</small></div><div id="result-grid" class="pixel-grid" aria-label="결과 이미지 그리드"></div><p class="grid-note" id="result-note">각 원소에 같은 수를 더합니다.</p></section>
+          </div>
+          <div id="matrix-zone" class="matrix-zone"></div>
+          <div class="explain"><span>수학으로 읽기</span><p id="explanation">이미지는 각 칸의 밝기를 원소로 하는 8 × 8 행렬입니다. 모든 원소에 같은 수를 더하면 전체 이미지가 밝아집니다.</p></div>
+        </div>
+      </section>
+    </main>
+    <script src="./script.js"></script>
+  </body>
+</html>

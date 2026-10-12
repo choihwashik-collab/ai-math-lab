@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101522">
+  <title>Mosquito Clap · 아이스브레이킹 게임</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../theme.css?v=1">
+  <style>
+    :root { --bg:#0b1020; --panel:#151c2e; --line:#2a3550; --text:#f7f8fc; --muted:#a9b3c8; --lime:#b8f34a; --pink:#ff6d8d; --blue:#6d8cff; }
+    [data-theme="light"] { --bg:#edf3f8; --panel:#ffffff; --line:#d6deea; --text:#172033; --muted:#66738b; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif; color:var(--text); background:radial-gradient(circle at 15% 10%,#233568 0,transparent 34rem),var(--bg); }
+    [data-theme="light"] body { background:radial-gradient(circle at 15% 10%,#dce8ff 0,transparent 34rem),var(--bg); }
+    [data-theme="light"] .pill,[data-theme="light"] .status { background:#f5f8fc; }
+    button,input { font:inherit; }
+    .app { width:min(1180px,calc(100% - 28px)); margin:auto; padding:22px 0 36px; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
+    .back-link { display:inline-flex; align-items:center; gap:7px; min-height:42px; padding:0 14px; border:1px solid var(--line); border-radius:13px; color:var(--text); background:var(--panel); text-decoration:none; font-size:13px; font-weight:800; }
+    .brand { display:flex; align-items:center; gap:11px; }
+    .brand-icon { display:grid; place-items:center; width:44px; height:44px; border-radius:14px; background:var(--lime); color:#17200b; font-size:22px; box-shadow:0 9px 30px #b8f34a44; }
+    .brand strong { display:block; font-size:18px; letter-spacing:-.03em; }
+    .brand span { color:var(--muted); font-size:12px; }
+    .hud { display:flex; gap:8px; }
+    .header-actions { display:flex; align-items:center; gap:8px; }
+    .icon-btn { width:42px; height:42px; border:1px solid var(--line); border-radius:13px; color:var(--text); background:var(--panel); cursor:pointer; }
+    .pill { min-width:92px; padding:9px 13px; border:1px solid var(--line); border-radius:13px; background:#11182a; text-align:center; }
+    .pill small { display:block; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.1em; }
+    .pill b { font-size:20px; }
+    .layout { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(290px,.65fr); gap:16px; }
+    .stage-card,.panel { border:1px solid var(--line); border-radius:22px; background:rgba(21,28,46,.94); box-shadow:0 22px 70px #0005; }
+    .stage-card { padding:13px; }
+    .stage { position:relative; overflow:hidden; aspect-ratio:4/3; border-radius:16px; background:#050810; }
+    video,canvas { position:absolute; inset:0; width:100%; height:100%; }
+    video { object-fit:fill; transform:scaleX(-1); }
+    canvas { z-index:2; }
+    .overlay { position:absolute; z-index:4; inset:0; display:grid; place-items:center; padding:24px; background:linear-gradient(#07101dcc,#07101df2); text-align:center; }
+    .overlay.hidden { display:none; }
+    .intro { max-width:450px; }
+    .intro .hero { font-size:56px; margin-bottom:4px; filter:drop-shadow(0 10px 14px #0008); }
+    .intro h1 { margin:0 0 10px; font-size:clamp(25px,4vw,40px); letter-spacing:-.055em; }
+    .intro p { margin:0 0 22px; color:var(--muted); line-height:1.65; }
+    .btn { min-height:48px; padding:0 20px; border:1px solid var(--line); border-radius:13px; color:var(--text); background:#202a42; cursor:pointer; font-weight:750; }
+    .btn.primary { border:0; background:var(--lime); color:#17200b; box-shadow:0 10px 26px #b8f34a33; }
+    .btn:disabled { opacity:.45; cursor:wait; }
+    .stage-top { position:absolute; z-index:3; left:12px; right:12px; top:12px; display:flex; justify-content:space-between; pointer-events:none; }
+    .badge { padding:7px 10px; border-radius:999px; background:#07101dcc; backdrop-filter:blur(8px); font-size:11px; color:#dce5f7; }
+    .badge.live::before { content:""; display:inline-block; width:7px; height:7px; margin-right:6px; border-radius:50%; background:#ff5877; box-shadow:0 0 0 4px #ff587733; }
+    .flash { position:absolute; z-index:3; inset:0; pointer-events:none; border:0 solid var(--lime); opacity:0; }
+    .flash.hit { animation:flash .35s ease; }
+    @keyframes flash { 20% { opacity:1; border-width:10px; } 100% { opacity:0; border-width:0; } }
+    .controls { display:flex; gap:9px; margin-top:12px; }
+    .controls .btn:first-child { flex:1; }
+    .side { display:flex; flex-direction:column; gap:14px; }
+    .panel { padding:19px; }
+    .panel h2 { margin:0 0 14px; font-size:15px; }
+    .status { padding:15px; border:1px solid var(--line); border-radius:14px; background:#101727; }
+    .status b { display:block; margin-bottom:4px; }
+    .status span { color:var(--muted); font-size:13px; line-height:1.5; }
+    .steps { list-style:none; padding:0; margin:0; display:grid; gap:12px; }
+    .steps li { display:grid; grid-template-columns:28px 1fr; gap:10px; align-items:start; color:var(--muted); font-size:13px; line-height:1.45; }
+    .steps i { display:grid; place-items:center; width:28px; height:28px; border-radius:9px; background:#252f49; color:var(--lime); font-style:normal; font-weight:800; }
+    .range-row { display:flex; justify-content:space-between; color:var(--muted); font-size:12px; margin-bottom:8px; }
+    input[type=range] { width:100%; accent-color:var(--lime); }
+    .hint { margin:12px 0 0; color:var(--muted); font-size:11px; line-height:1.5; }
+    .error { display:none; margin-top:10px; color:#ffc0cd; font-size:12px; }
+    .error.show { display:block; }
+    @media (max-width:800px) { .app{width:min(100% - 16px,620px);padding-top:12px}.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr}.panel:last-child{grid-column:1/-1}.brand span{display:none}.pill{min-width:72px;padding:7px 9px}.stage-card{padding:8px}.controls{flex-wrap:wrap}.controls .btn{min-width:120px}.hud{gap:5px} }
+    @media (max-width:500px) { header{align-items:flex-start}.brand strong{font-size:15px}.brand-icon{width:38px;height:38px}.header-actions{gap:4px}.icon-btn{width:34px;height:34px;padding:0}.pill{min-width:58px}.pill small{font-size:8px}.pill b{font-size:17px}.side{grid-template-columns:1fr}.panel:last-child{grid-column:auto}.stage{aspect-ratio:3/4}.intro .hero{font-size:44px} }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand"><div class="brand-icon">🦟</div><div><strong>Mosquito Clap</strong><span>AI 아이스브레이킹 게임</span></div></div>
+      <div class="header-actions"><a class="back-link" href="../">← 활동 목록</a><button id="sound-toggle" class="icon-btn" title="소리 켜기/끄기">🔊</button><button id="theme-toggle" class="icon-btn" title="밝은/어두운 화면 전환">☀️</button><div class="hud"><div class="pill"><small>Score</small><b id="score">0</b></div><div class="pill"><small>Time</small><b id="time">30</b></div></div></div>
+    </header>
+    <div class="layout">
+      <section class="stage-card">
+        <div id="stage" class="stage">
+          <video id="video" playsinline muted></video>
+          <canvas id="canvas"></canvas>
+          <div class="stage-top"><span id="live" class="badge">카메라 대기</span><span id="hands" class="badge">손 0개</span></div>
+          <div id="flash" class="flash"></div>
+          <div id="overlay" class="overlay"><div class="intro"><div class="hero">👏 🦟</div><h1 id="overlay-title">모기를 박수로 잡아라!</h1><p id="overlay-copy">양손을 카메라에 보여준 뒤, 날아다니는 모기 위치에서 박수를 치세요. 정확히 잡을 때마다 1점!</p><button id="start" class="btn primary">게임 준비하기</button><div id="error" class="error"></div></div></div>
+        </div>
+        <div class="controls"><button id="play" class="btn primary" disabled>30초 게임 시작</button><button id="pause" class="btn" disabled>일시정지</button><button id="camera-off" class="btn" disabled>카메라 끄기</button></div>
+      </section>
+      <aside class="side">
+        <section class="panel"><h2>현재 상태</h2><div class="status"><b id="status-title">준비 전</b><span id="status-copy">게임 준비하기를 눌러 카메라와 AI를 연결하세요.</span></div></section>
+        <section class="panel"><h2>게임 방법</h2><ol class="steps"><li><i>1</i><span>양손을 화면에 보여주세요.</span></li><li><i>2</i><span>손을 벌려 박수를 준비하세요.</span></li><li><i>3</i><span>모기 위에서 빠르게 박수치면 +1점!</span></li></ol></section>
+        <section class="panel"><h2>박수 민감도</h2><div class="range-row"><span>정확하게</span><strong id="sensitivity-label">보통</strong><span>쉽게</span></div><input id="sensitivity" type="range" min="8" max="18" value="12"><p class="hint">처음에는 ‘보통’을 권장합니다. 박수가 잘 인식되지 않으면 오른쪽으로 옮기세요.</p></section>
+      </aside>
+    </div>
+  </main>
+  <script type="module">
+    import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs";
+
+    const MODEL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+    const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
+    const PALM_POINTS = [0, 5, 9, 13, 17];
+    const HAND_CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+    const $ = (id) => document.getElementById(id);
+    const video=$("video"), canvas=$("canvas"), ctx=canvas.getContext("2d"), overlay=$("overlay"), startBtn=$("start"), playBtn=$("play"), pauseBtn=$("pause"), offBtn=$("camera-off");
+    let landmarker=null, stream=null, raf=0, ready=false, playing=false, paused=false, score=0, seconds=30, timer=null, lastVideoTime=-1, clapArmed=false, lastDistance=1, lastHit=0;
+    let audioCtx=null,musicTimer=null,soundOn=true,musicStep=0;
+    const makeMosquito=()=>({x:.1+Math.random()*.8,y:.12+Math.random()*.75,vx:(Math.random()>.5?1:-1)*(.0013+Math.random()*.0017),vy:(Math.random()>.5?1:-1)*(.001+Math.random()*.0015),size:.1,angle:Math.random()*6});
+    const mosquitoes=Array.from({length:5},makeMosquito);
+
+    function setStatus(title,copy){$("status-title").textContent=title;$("status-copy").textContent=copy;}
+    function resize(){if(!video.videoWidth)return;canvas.width=video.videoWidth;canvas.height=video.videoHeight;}
+    function palmCenter(hand){const p=PALM_POINTS.map(i=>hand[i]);return{x:1-p.reduce((s,v)=>s+v.x,0)/p.length,y:p.reduce((s,v)=>s+v.y,0)/p.length};}
+    function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+    function unlockAudio(){if(!soundOn)return;audioCtx??=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();}
+    function tone(freq,d=.1,vol=.035,type="sine"){if(!soundOn||!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(vol,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+d);o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d);}
+    function startMusic(){if(!soundOn||musicTimer)return;unlockAudio();const notes=[220,277,330,277,247,330,370,330];musicTimer=setInterval(()=>tone(notes[musicStep++%notes.length],.16,.018,"triangle"),360);}
+    function stopMusic(){clearInterval(musicTimer);musicTimer=null;}
+    function moveMosquito(){for(const m of mosquitoes){m.x+=m.vx;m.y+=m.vy;m.angle+=.16;if(m.x<.06||m.x>.94)m.vx*=-1;if(m.y<.08||m.y>.92)m.vy*=-1;}}
+    function respawn(i){mosquitoes[i]=makeMosquito();}
+    function drawMosquito(){for(const m of mosquitoes){const x=m.x*canvas.width,y=m.y*canvas.height,s=m.size*Math.min(canvas.width,canvas.height);ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(m.angle)*.16);ctx.font=`${s}px sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.shadowColor="#fff";ctx.shadowBlur=14;ctx.fillText("🦟",0,0);ctx.restore();}}
+    function drawHands(hands){ctx.lineWidth=Math.max(2,canvas.width/300);ctx.lineCap="round";for(const hand of hands){const p=hand.map(v=>({x:(1-v.x)*canvas.width,y:v.y*canvas.height}));ctx.strokeStyle="#b8f34acc";for(const [a,b] of HAND_CONNECTIONS){ctx.beginPath();ctx.moveTo(p[a].x,p[a].y);ctx.lineTo(p[b].x,p[b].y);ctx.stroke();}p.forEach((v,i)=>{ctx.beginPath();ctx.arc(v.x,v.y,PALM_POINTS.includes(i)?5:3.5,0,Math.PI*2);ctx.fillStyle=PALM_POINTS.includes(i)?"#b8f34a":"#fff";ctx.fill();});}}
+    function targetInfo(hands){if(hands.length<2)return null;const a=palmCenter(hands[0]),b=palmCenter(hands[1]),mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};let nearest=-1,min=Infinity;mosquitoes.forEach((m,i)=>{const d=distance(mid,m);if(d<min){min=d;nearest=i;}});return{a,b,mid,nearest,locked:min<.13};}
+    function drawReticle(t){if(!t)return;const x=t.mid.x*canvas.width,y=t.mid.y*canvas.height,r=.13*Math.min(canvas.width,canvas.height),c=t.locked?"#ff365d":"#b8f34a";ctx.save();ctx.strokeStyle=c;ctx.fillStyle=t.locked?"#ff365d28":"#b8f34a18";ctx.lineWidth=4;ctx.shadowColor=c;ctx.shadowBlur=t.locked?22:8;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(x-r*1.25,y);ctx.lineTo(x-r*.55,y);ctx.moveTo(x+r*.55,y);ctx.lineTo(x+r*1.25,y);ctx.moveTo(x,y-r*1.25);ctx.lineTo(x,y-r*.55);ctx.moveTo(x,y+r*.55);ctx.lineTo(x,y+r*1.25);ctx.stroke();ctx.restore();}
+    function hit(i){score++;$("score").textContent=score;lastHit=performance.now();$("flash").classList.remove("hit");void $("flash").offsetWidth;$("flash").classList.add("hit");setStatus("잡았다! +1",`현재 ${score}점입니다. 손을 다시 벌려 다음 박수를 준비하세요.`);navigator.vibrate?.(70);tone(880,.08,.07,"square");setTimeout(()=>tone(1320,.12,.05),70);respawn(i);}
+    function checkClap(hands,t){if(!t){clapArmed=false;lastDistance=1;return;}const d=distance(t.a,t.b),threshold=Number($("sensitivity").value)/100,closing=lastDistance-d;if(d>.28)clapArmed=true;if(clapArmed&&d<threshold&&closing>.018&&performance.now()-lastHit>600){clapArmed=false;if(t.locked)hit(t.nearest);else{tone(130,.15,.04,"sawtooth");setStatus("아깝다!","조준경 안에 모기가 없었어요.");}}lastDistance=d;}
+    function frame(){if(!ready||paused)return;resize();ctx.clearRect(0,0,canvas.width,canvas.height);let hands=[];if(video.currentTime!==lastVideoTime){const result=landmarker.detectForVideo(video,performance.now());hands=result.landmarks||[];lastVideoTime=video.currentTime;window.latestHands=hands;}else hands=window.latestHands||[];$("hands").textContent=`손 ${hands.length}개 · 관절 ${hands.length*21}개`;if(playing)moveMosquito();drawMosquito();drawHands(hands);const t=targetInfo(hands);drawReticle(t);if(playing)checkClap(hands,t);else if(hands.length<2)setStatus("양손을 보여주세요","각 손의 관절 21개를 추적합니다.");else setStatus(t.locked?"타깃 포착!":"준비 완료",t.locked?"조준경이 붉어졌습니다. 박수치세요!":"양손 중앙의 조준경으로 모기를 겨누세요.");raf=requestAnimationFrame(frame);}
+    async function prepare(){unlockAudio();startBtn.disabled=true;startBtn.textContent="AI 불러오는 중…";$("error").classList.remove("show");try{const vision=await FilesetResolver.forVisionTasks(WASM);landmarker=await HandLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:MODEL,delegate:"GPU"},runningMode:"VIDEO",numHands:2,minHandDetectionConfidence:.65,minHandPresenceConfidence:.65,minTrackingConfidence:.65});stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:960},height:{ideal:720}},audio:false});video.srcObject=stream;await video.play();ready=true;overlay.classList.add("hidden");playBtn.disabled=pauseBtn.disabled=offBtn.disabled=false;$("live").textContent="AI 추적 중";$("live").classList.add("live");setStatus("양손을 보여주세요","각 손의 21개 관절을 정밀 추적합니다.");frame();}catch(e){console.error(e);startBtn.disabled=false;startBtn.textContent="다시 시도";$("error").textContent="카메라 권한과 인터넷 연결을 확인해 주세요. 이 앱은 HTTPS 또는 localhost에서 실행해야 합니다.";$("error").classList.add("show");}}
+    function startGame(){if(!ready)return;unlockAudio();startMusic();score=0;seconds=30;playing=true;paused=false;clapArmed=false;$("score").textContent=0;$("time").textContent=30;playBtn.disabled=true;playBtn.textContent="게임 진행 중";pauseBtn.textContent="일시정지";setStatus("게임 시작!","조준경이 붉어졌을 때 박수치세요!");clearInterval(timer);timer=setInterval(()=>{if(paused)return;seconds--;$("time").textContent=seconds;if(seconds<=0)endGame();},1000);}
+    function endGame(){playing=false;stopMusic();clearInterval(timer);playBtn.disabled=false;playBtn.textContent="다시 시작";overlay.classList.remove("hidden");$("overlay-title").textContent=`게임 끝! ${score}점`;$("overlay-copy").textContent=score>=8?"대단해요! 모기 사냥의 달인이네요.":score>=4?"좋아요! 한 번 더 하면 기록을 깰 수 있어요.":"첫 도전 성공! 손을 크게 벌렸다가 빠르게 박수쳐 보세요.";startBtn.textContent="게임 화면으로 돌아가기";startBtn.disabled=false;}
+    function togglePause(){paused=!paused;pauseBtn.textContent=paused?"계속하기":"일시정지";if(paused){cancelAnimationFrame(raf);stopMusic();setStatus("일시정지","계속하기를 누르면 게임을 이어갑니다.");}else{if(playing)startMusic();frame();}}
+    function stopCamera(){ready=playing=false;paused=false;stopMusic();clearInterval(timer);cancelAnimationFrame(raf);stream?.getTracks().forEach(t=>t.stop());video.srcObject=null;$("live").textContent="카메라 꺼짐";$("live").classList.remove("live");playBtn.disabled=pauseBtn.disabled=offBtn.disabled=true;overlay.classList.remove("hidden");$("overlay-title").textContent="카메라가 꺼졌습니다";$("overlay-copy").textContent="다시 준비하기를 누르면 AI 손 추적을 시작합니다.";startBtn.textContent="다시 준비하기";}
+    startBtn.addEventListener("click",()=>ready?overlay.classList.add("hidden"):prepare());playBtn.addEventListener("click",startGame);pauseBtn.addEventListener("click",togglePause);offBtn.addEventListener("click",stopCamera);$("theme-toggle").addEventListener("click",()=>{const light=document.documentElement.dataset.theme!=="light";document.documentElement.dataset.theme=light?"light":"dark";$("theme-toggle").textContent=light?"🌙":"☀️";});$("sound-toggle").addEventListener("click",()=>{soundOn=!soundOn;$("sound-toggle").textContent=soundOn?"🔊":"🔇";if(!soundOn)stopMusic();else if(playing&&!paused){unlockAudio();startMusic();}});$("sensitivity").addEventListener("input",e=>{$("sensitivity-label").textContent=e.target.value<11?"정확":e.target.value>14?"쉬움":"보통";});window.addEventListener("beforeunload",()=>stream?.getTracks().forEach(t=>t.stop()));
+  </script>
+</body>
+</html>

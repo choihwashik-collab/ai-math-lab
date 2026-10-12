@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>이차곡선 탐구 | AI MATH LAB</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./typography-v3.css?v=1" />
+    <link rel="stylesheet" href="./premium-v4.css?v=1" />
+    <link rel="stylesheet" href="./formula-polish-v4.css?v=1" />
+    <link rel="stylesheet" href="./cone-3d-v5.css?v=2" />
+    <link rel="stylesheet" href="./reflection-v7.css?v=2" />
+    <link rel="stylesheet" href="./reflection-v8.css?v=1" />
+    <link rel="stylesheet" href="../../../theme.css?v=1" />
+    <link rel="stylesheet" href="./interaction-v5.css?v=2" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  </head>
+  <body>
+    <header><a class="brand" href="../../../index.html"><b>∑</b> AI MATH <em>LAB</em></a><span>기하 수업 코너 · 이차곡선 탐구</span><a href="../" class="back">기하 활동으로 <i>↗</i></a></header>
+    <main>
+      <section class="hero"><p class="eyebrow">CONIC SECTIONS LAB</p><h1>정의에서 출발해<br /><strong>곡선의 성질</strong>을 발견해요.</h1><p>포물선·타원·쌍곡선이 만들어지는 조건을 직접 조절하고, 원추 절단·빛의 반사·접선까지 차례로 탐구합니다.</p></section>
+      <nav class="flow" aria-label="탐구 순서"><a class="active" href="#definition"><b>01</b> 정의로 그리기</a><a href="#cone"><b>02</b> 원추 절단</a><a href="#reflection"><b>03</b> 반사 성질</a><a href="#tangent"><b>04</b> 접선 탐구</a></nav>
+
+      <section class="lab-section" id="definition"><div class="section-title"><p class="eyebrow">01 · LOCUS</p><h2>정의로 곡선을 그려요</h2><p>점을 움직이며 조건을 만족하는 자취가 어떻게 곡선이 되는지 관찰하세요.</p></div><div class="curve-picker" role="tablist"><button class="curve-choice active" data-curve="parabola">포물선</button><button class="curve-choice" data-curve="ellipse">타원</button><button class="curve-choice" data-curve="hyperbola">쌍곡선</button></div><div class="sim-grid"><div class="canvas-card"><canvas id="locus-canvas" width="680" height="400"></canvas><button id="play-locus" class="play">▶ 자취 그리기</button></div><aside class="math-card"><p class="label">현재 곡선의 고유 정의</p><h3 id="definition-name">포물선</h3><p id="definition-text">한 점 F(초점)과 한 직선 l(준선)까지의 거리가 같은 점 P의 자취</p><div id="definition-formula" class="formula">PF = d(P, l)</div><dl id="definition-values"></dl><div class="minor"><b>초점·준선 보충 설명</b><p id="focus-directrix">포물선은 초점과 준선까지의 거리가 같은 특별한 곡선입니다.</p></div></aside></div></section>
+
+      <section class="lab-section pale" id="cone">
+        <div class="section-title"><p class="eyebrow">02 · DANDELIN PROOF</p><h2>원뿔의 경계선은 왜 이차곡선이 될까요?</h2><p>포물선·타원·쌍곡선을 선택하고, 단델린 구가 각 곡선의 정의를 만드는 과정을 회전 가능한 3D 화면에서 확인하세요.</p></div>
+        <div class="cone-lab-v5">
+          <div class="cone-stage-card-v5">
+            <div id="cone-three-v5" role="img" aria-label="원뿔의 절단 경계선과 단델린 구를 이용해 포물선, 타원, 쌍곡선의 정의를 증명하는 3차원 모형">
+              <div class="cone-label-layer-v5" aria-hidden="true"></div>
+              <div class="cone-drag-hint-v5">마우스로 회전 · 휠로 확대</div>
+            </div>
+            <div class="cone-legend-v5" aria-label="3차원 모형 범례">
+              <span><i class="legend-curve-v5"></i>절단 경계선</span><span><i class="legend-plane-v5"></i>절단평면</span><span><i class="legend-sphere-v5"></i>단델린 구</span><span><i class="legend-proof-v5"></i>증명 선분</span>
+            </div>
+            <div class="cone-type-buttons-v6" role="group" aria-label="증명할 원추곡선 선택">
+              <button type="button" data-cone-type-v6="parabola" class="active">포물선</button>
+              <button type="button" data-cone-type-v6="ellipse">타원</button>
+              <button type="button" data-cone-type-v6="hyperbola">쌍곡선</button>
+            </div>
+            <div class="cone-stage-controls-v5">
+              <div class="cone-step-buttons-v5" role="group" aria-label="단델린 증명 단계">
+                <button type="button" data-cone-step="1" class="active">1 절단</button>
+                <button type="button" data-cone-step="2">2 초점·준선</button>
+                <button type="button" data-cone-step="3">3 거리 비교</button>
+                <button type="button" data-cone-step="4">4 결론</button>
+              </div>
+              <label class="cone-point-control-v5"><span>곡선 위의 점 <span id="cone-point-label-v5"></span></span><input id="cone-point-v5" type="range" min="0" max="1000" value="620" /></label>
+              <div class="cone-view-actions-v6">
+                <button type="button" id="cone-reset-view-v5">시점 초기화</button>
+                <label class="cone-visibility-switch-v7" for="cone-toggle-points-v6">
+                  <input id="cone-toggle-points-v6" type="checkbox" checked />
+                  <span class="cone-switch-track-v7" aria-hidden="true"><i></i></span>
+                  <span class="cone-switch-copy-v7"><b>점·라벨</b><em id="cone-toggle-state-v7">표시</em></span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <aside class="cone-proof-card-v5">
+            <p class="label">DANDELIN SPHERE PROOF</p>
+            <p class="cone-step-count-v5" id="cone-step-count-v5">STEP 1 / 4</p>
+            <h3 id="cone-proof-title-v5">생성선과 평행하게 자르기</h3>
+            <p id="cone-proof-text-v5"></p>
+            <div class="cone-proof-formula-v5" id="cone-proof-formula-v5"></div>
+            <div class="cone-distance-values-v5" id="cone-distance-values-v5"></div>
+            <ol class="cone-proof-chain-v5">
+              <li data-proof-line="1"><b>① 같은 점에서 구에 그은 접선</b><span id="cone-chain-one-v5"></span></li>
+              <li data-proof-line="2"><b>② 같은 높이차와 같은 기울기</b><span id="cone-chain-two-v5"></span></li>
+              <li data-proof-line="3"><b>③ 포물선의 정의</b><span id="cone-chain-three-v5"></span></li>
+            </ol>
+          </aside>
+        </div>
+        <div class="cone-legacy-v5" hidden aria-hidden="true">
+          <canvas id="cone-canvas" width="680" height="400"></canvas>
+          <input id="cone-type" type="range" min="0" max="2" step="1" value="0" />
+          <output id="cone-output">포물선 절단</output>
+          <span id="cone-name">포물선</span><span id="cone-text"></span><span id="cone-formula"></span>
+        </div>
+      </section>
+
+      <section class="lab-section" id="reflection">
+        <div class="section-title"><p class="eyebrow">03 · REFLECTION</p><h2>빛은 어디로 반사될까요?</h2><p>곡선 위의 점에서 법선을 구하고, 입사각과 반사각이 같아지는 정확한 빛의 경로를 관찰해 보세요.</p></div>
+        <div class="reflection-lab-v7">
+          <div class="reflection-stage-v7">
+            <div class="reflection-type-v7" role="group" aria-label="반사 성질을 탐구할 이차곡선">
+              <button type="button" class="active" data-reflection-type-v7="parabola">포물선</button>
+              <button type="button" data-reflection-type-v7="ellipse">타원</button>
+              <button type="button" data-reflection-type-v7="hyperbola">쌍곡선</button>
+            </div>
+            <div class="reflection-canvas-wrap-v7"><canvas id="reflection-canvas-v7" width="760" height="470" aria-label="이차곡선의 빛 반사 시뮬레이션"></canvas><div class="reflection-badge-v7">정확한 벡터 반사</div></div>
+            <label class="reflection-slider-v7"><span>반사점 <i>P</i>의 위치</span><input id="reflection-point-v7" type="range" min="0" max="1000" value="620" /></label>
+            <div class="reflection-actions-v7"><button type="button" id="fire-ray-v7" class="reflection-fire-v7"><span>▶</span> 한 줄기 발사</button><button type="button" id="fire-rays-v7" class="reflection-multi-v7"><span>✦</span> 여러 줄기 발사</button><button type="button" id="reset-ray-v7">초기화</button></div>
+            <div class="reflection-legend-v7"><span><i class="incident"></i>입사광</span><span><i class="reflected"></i>반사광</span><span><i class="normal"></i>법선</span></div>
+          </div>
+          <aside class="reflection-proof-v7">
+            <p class="label">REFLECTION LAW</p><h3 id="reflection-title-v7">포물선의 반사 성질</h3><p id="reflection-text-v7"></p>
+            <div id="reflection-property-v7" class="reflection-formula-v7"></div>
+            <div id="reflection-angle-v7" class="reflection-angle-v7"></div>
+            <div class="reflection-method-v7"><b>화면의 선은 이렇게 계산합니다</b><ol><li>반사점 <i>P</i>에서 곡선의 법선 벡터를 구합니다.</li><li>입사 벡터를 법선에 대해 정확히 대칭시킵니다.</li><li>계산된 반사 벡터의 방향으로 빛을 진행시킵니다.</li></ol></div>
+            <div id="reflection-vector-v7" class="reflection-vector-v7"></div>
+          </aside>
+        </div>
+        <div hidden aria-hidden="true"><canvas id="reflection-canvas" width="680" height="400"></canvas><button id="play-light"></button><span id="reflection-name"></span><span id="reflection-text"></span><span id="reflection-note"></span><div class="formula"></div></div>
+      </section>
+
+      <section class="lab-section pale" id="tangent"><div class="section-title"><p class="eyebrow">04 · TANGENT</p><h2>한 점에서 곡선에 닿는 직선</h2><p>점 P의 위치를 바꿔 접선의 방향과 방정식을 관찰하세요.</p></div><div class="sim-grid"><div class="canvas-card"><canvas id="tangent-canvas" width="680" height="400"></canvas><label class="slider-label">점 P의 위치 <input id="tangent-position" type="range" min="-85" max="85" value="25" /></label></div><aside class="math-card"><p class="label">접선의 방정식</p><h3 id="tangent-name">포물선의 접선</h3><div id="tangent-formula" class="formula">ty = x + pt²</div><p id="tangent-text">포물선 y² = 4px 위의 점 P(pt², 2pt)에서의 접선입니다.</p><div class="minor"><b>생각해 보기</b><p>점 P가 움직일 때 접선이 초점과 이루는 각은 어떻게 바뀔까요?</p></div></aside></div></section>
+    </main>
+    <script src="./script.js"></script>
+    <script src="./script-v4.js?v=2"></script>
+    <script src="./formula-polish-v4.js?v=1"></script>
+    <script src="./reflection-v7.js?v=3"></script>
+    <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"}}</script>
+    <script type="module" src="./cone-3d-v6.js?v=2"></script>
+  </body>
+</html>
