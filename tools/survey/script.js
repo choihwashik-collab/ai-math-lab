@@ -7,7 +7,7 @@
   const memory = new Map();
   const read = k => { try { return localStorage.getItem(k) || memory.get(k); } catch { return memory.get(k); } };
   const store = (k,v) => { memory.set(k,v); try { localStorage.setItem(k,v); } catch {} };
-  let room, ownerToken = '', studentName = '', participantId = '', responses = [], timer, view = 'home', polling = false, migrationCode = '';
+  let room, ownerToken = '', studentName = '', participantId = '', responses = [], timer, view = 'home', polling = false, migrationCode = '', resultsVisible = false;
   const notice = text => {
     $('#connection-status').textContent = text;
     $('#join-error').textContent = view === 'home' ? text : '';
@@ -52,6 +52,7 @@
   }
   async function copy(text) { try {await navigator.clipboard.writeText(text);} catch {window.prompt('아래 링크를 복사해 주세요.',text);} }
   function renderTeacher() {
+    resultsVisible = false;
     $('#teacher-title').textContent=room.title;$('#room-code').textContent=room.code;
     $('#participant-link').href=link();$('#qrcode').innerHTML='';
     try {if(!window.QRCode)throw new Error('QR 생성기를 불러오지 못했습니다. 참여 링크를 공유해 주세요.');
@@ -64,6 +65,9 @@
     $('#end-room').disabled=$('#add-live').disabled=room.status!=='open';
     $('#delete-notice').textContent=room.expiresAt?`${new Date(room.expiresAt).toLocaleString('ko-KR')}부터 입장·조회가 차단되며 저장된 응답은 1시간 이내 정리됩니다.`:'종료 후 24시간까지 결과를 조회할 수 있습니다. 교사용 관리 링크는 참여자에게 공유하지 마세요.';
     const box=$('#results-list');box.innerHTML='';
+    $('#toggle-results').textContent=resultsVisible?'다시 숨기기':'같이 보기';
+    $('#toggle-results').setAttribute('aria-pressed',String(resultsVisible));
+    if(!resultsVisible){const hidden=document.createElement('p');hidden.className='results-hidden';hidden.textContent='답변을 모으고 있습니다. 같이 보기를 누르면 응답 결과가 표시됩니다.';box.append(hidden);return;}
     room.questions.forEach((q,i)=>{
       const vals=responses.map(r=>r.answers[q.id]).filter(Boolean),el=document.createElement('article');el.className='result-card';
       const counts=q.options.map(o=>[o,vals.filter(v=>v===o).length]),max=Math.max(1,...counts.map(x=>x[1]));
@@ -93,11 +97,12 @@
       if(room.status==='closed'&&view==='student'){$('#response-form button').disabled=true;notice('설문이 종료되었습니다.');}
     }catch(e){notice(e.message);}finally{polling=false;if(view===oldView&&room?.code===code)schedule();}
   }
-  action('#open-builder',async()=>{if(!hosted)throw new Error('설문 서버가 아직 연결되지 않았습니다.');ownerToken='';responses=[];room={questions:[question('choice','오늘 연수 내용을 이해했나요?'),question('text','가장 기억에 남는 내용을 한 문장으로 적어 보세요.')]};renderBuilder();show('builder');});
+  action('#open-builder',async()=>{if(!hosted)throw new Error('설문 서버가 아직 연결되지 않았습니다.');ownerToken='';responses=[];migrationCode='';room={questions:[question('choice','오늘 연수 내용을 이해했나요?'),question('text','가장 기억에 남는 내용을 한 문장으로 적어 보세요.')]};renderBuilder();show('builder');});
   document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>show('home'));
   for(const [selector,type] of [['#add-choice','choice'],['#add-text','text']])action(selector,async()=>{if(room.questions.length>=30)throw new Error('질문은 최대 30개입니다.');room.questions.push(question(type));renderBuilder();});
   action('#create-room',async()=>{
     const title=$('#survey-title').value.trim();if(!title||!room.questions.length||room.questions.some(q=>!q.text.trim()))throw new Error('제목과 모든 질문을 작성해 주세요.');
+    const pin=$('#creator-pin').value.trim();if(pin.length<4||pin.length>32)throw new Error('이번 설문에 사용할 관리 비밀번호를 4~32자로 정해 주세요.');
     const data=await rpc('create',{title,questions:room.questions,pin:$('#creator-pin').value,preferredCode:migrationCode});room=data.room;ownerToken=data.ownerToken;responses=[];migrationCode='';
     store(`survey-owner-${room.code}`,ownerToken);$('#creator-pin').value='';renderTeacher();show('teacher');
   });
@@ -114,6 +119,13 @@
   };
   action('#answer-again',async()=>{const answers=drafts(),data=await request('refresh');room=data.room;if(room.status!=='open')throw new Error('종료된 설문입니다.');renderStudent(answers);});
   action('#copy-link',()=>copy(link()));action('#copy-management',()=>copy(link(true)));
+  $('#toggle-results').onclick=()=>{resultsVisible=!resultsVisible;renderResults();};
+  action('#open-teacher',async()=>{
+    const code=$('#teacher-code').value.trim(),pin=$('#teacher-pin').value;
+    if(!/^\d{6}$/.test(code))throw new Error('관리할 설문의 6자리 방 번호를 입력해 주세요.');
+    const data=await rpc('unlock',{code,pin});room=data.room;ownerToken=data.ownerToken;responses=data.responses;
+    store(`survey-owner-${code}`,ownerToken);$('#teacher-pin').value='';renderTeacher();show('teacher');
+  });
   action('#end-room',async()=>{const data=await request('close');room=data.room;renderResults();clearTimeout(timer);});
   action('#delete-room',async()=>{if(!confirm('이 설문방과 모든 응답을 삭제할까요? 복구할 수 없습니다.'))return;await request('delete');room=null;ownerToken='';responses=[];show('home');});
   action('#add-live',async()=>{const text=$('#live-question').value.trim();if(!text)throw new Error('추가할 질문을 입력해 주세요.');const data=await request('addQuestion',{text});room=data.room;$('#live-question').value='';renderResults();});
@@ -137,7 +149,7 @@
     }
     const initial=await new Promise(resolve=>google.script.url.getLocation(resolve));
     const imported=new URLSearchParams(initial.hash).get('import');
-    if(imported){const legacy=JSON.parse(imported);if(!/^\d{6}$/.test(String(legacy.code))||!Array.isArray(legacy.questions))throw new Error('설문 가져오기 정보를 확인해 주세요.');migrationCode=String(legacy.code);room={questions:legacy.questions.map(q=>question(q.type,q.text))};room.questions.forEach((q,i)=>q.options=legacy.questions[i].options||[]);$('#survey-title').value=legacy.title||'이전 설문';renderBuilder();show('builder');notice(`${migrationCode}번 설문을 서버에 옮기려면 설문 만들기 암호를 입력하고 방 만들기를 누르세요.`);return;}
+    if(imported){const legacy=JSON.parse(imported);if(!/^\d{6}$/.test(String(legacy.code))||!Array.isArray(legacy.questions))throw new Error('설문 가져오기 정보를 확인해 주세요.');migrationCode=String(legacy.code);room={questions:legacy.questions.map(q=>question(q.type,q.text))};room.questions.forEach((q,i)=>q.options=legacy.questions[i].options||[]);$('#survey-title').value=legacy.title||'이전 설문';renderBuilder();show('builder');notice(`${migrationCode}번 설문에 사용할 관리 비밀번호를 직접 정하고 방 만들기를 누르세요.`);return;}
     const code=config.initialRoom||initial.parameter.room,mode=config.initialMode||initial.parameter.mode;show('home');if(!code)return;
     $('#join-code').value=code;
     if(mode==='teacher'){ownerToken=new URLSearchParams(initial.hash).get('token')||read(`survey-owner-${code}`)||'';const data=await rpc('results',{code,ownerToken});room=data.room;responses=data.responses;store(`survey-owner-${code}`,ownerToken);renderTeacher();show('teacher');}

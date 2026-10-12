@@ -92,6 +92,10 @@ function owner_(r, token) {
     throw new Error('교사용 관리 권한이 없습니다. 방을 만든 화면 또는 관리 링크를 사용해 주세요.');
   }
 }
+function passwordHash_(password, salt) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + ':' + password)
+    .map(b => ('0' + ((b + 256) % 256).toString(16)).slice(-2)).join('');
+}
 function responseRows_(sheet, code) {
   return sheet.getDataRange().getValues().map((values, i) => ({ values, row: i + 1 }))
     .filter(x => x.row > 1 && String(x.values[0]) === code);
@@ -103,8 +107,8 @@ function removeRoom_(s, found) {
 function dispatch_(req) {
   const s = sheets_();
   if (req.action === 'create') {
-    const pin = PropertiesService.getScriptProperties().getProperty('CREATOR_PIN');
-    if (!pin || req.pin !== pin) throw new Error('설문 만들기 암호가 맞지 않습니다.');
+    const pin = text_(req.pin, 32, '관리 비밀번호');
+    if (pin.length < 4) throw new Error('관리 비밀번호는 4~32자로 직접 정해 주세요.');
     const title = text_(req.title, 150, '설문 제목');
     const questions = questions_(req.questions);
     if (JSON.stringify(questions).length > 40000) throw new Error('설문 내용이 너무 깁니다. 질문과 선택지를 줄여 주세요.');
@@ -118,6 +122,8 @@ function dispatch_(req) {
     }
     const room = { code, title, questions, ownerToken: Utilities.getUuid() + Utilities.getUuid(),
       status: 'open', createdAt: Date.now(), expiresAt: null, revision: 1 };
+    room.passwordSalt = Utilities.getUuid();
+    room.passwordHash = passwordHash_(pin, room.passwordSalt);
     s.rooms.appendRow([code, JSON.stringify(room), '', '']);
     return { room: publicRoom_(room), ownerToken: room.ownerToken, responses: [] };
   }
@@ -132,6 +138,18 @@ function dispatch_(req) {
   }
   if (req.action === 'join' || req.action === 'refresh') {
     return { room: publicRoom_(r) };
+  }
+  if (req.action === 'unlock') {
+    const cache = CacheService.getScriptCache(), key = 'login-' + code;
+    const attempts = Number(cache.get(key) || 0);
+    if (attempts >= 5) throw new Error('비밀번호를 여러 번 틀렸습니다. 1분 후 다시 시도해 주세요.');
+    const correct = typeof req.pin === 'string' && (r.passwordHash
+      ? passwordHash_(req.pin.trim(), r.passwordSalt) === r.passwordHash
+      : req.pin === PropertiesService.getScriptProperties().getProperty('CREATOR_PIN'));
+    if (!correct) { cache.put(key, String(attempts + 1), 60); throw new Error('이 설문의 관리 비밀번호가 맞지 않습니다.'); }
+    cache.remove(key);
+    return { room: publicRoom_(r), ownerToken: r.ownerToken,
+      responses: responseRows_(s.responses, code).map(x => JSON.parse(x.values[3])) };
   }
   if (req.action === 'submit') {
     if (r.status !== 'open') throw new Error('종료된 설문입니다.');

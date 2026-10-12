@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
@@ -20,9 +20,11 @@ function server() {
   const rooms = new Sheet(), responses = new Sheet();
   const props = new Map([['SURVEY_SHEET_ID','test'],['CREATOR_PIN','private-test-pin']]);
   let held = false;
+  const cache = new Map();
   const context = vm.createContext({
     console, Date, Math, Set, JSON,
-    Utilities: { getUuid: randomUUID },
+    Utilities: { getUuid: randomUUID, DigestAlgorithm: { SHA_256: 'sha256' }, computeDigest: (algorithm,value) => [...createHash(algorithm).update(value).digest()] },
+    CacheService: { getScriptCache: () => ({ get:k=>cache.get(k),put:(k,v)=>cache.set(k,v),remove:k=>cache.delete(k) }) },
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => props.get(k) }) },
     SpreadsheetApp: { openById: () => ({ getSheetByName: n => n === 'Rooms' ? rooms : responses }) },
     LockService: { getScriptLock: () => ({
@@ -91,4 +93,17 @@ test('legacy migration keeps the original room code and rejects collisions',()=>
   const created=s.call('create',args);assert.equal(created.ok,true);assert.equal(created.data.room.code,'670874');
   assert.equal(s.call('join',{code:'670874'}).data.room.title,'이전 설문');
   assert.equal(s.call('create',args).ok,false);
+});
+
+test('each survey has its own password; plaintext and hashes are not public; failed logins are limited',()=>{
+  const s=server(),args={title:'관리 비밀번호',questions:[{type:'text',text:'의견'}]};
+  assert.equal(s.call('create',{...args,pin:'12'}).ok,false);
+  const a=s.call('create',{...args,pin:'2468'}).data,b=s.call('create',{...args,pin:'1357'}).data;
+  assert.equal(s.call('unlock',{code:a.room.code,pin:'2468'}).ok,true);
+  assert.equal(s.call('unlock',{code:b.room.code,pin:'2468'}).ok,false);
+  const joined=s.call('join',{code:a.room.code}).data.room;
+  assert.equal('passwordHash' in joined,false);assert.equal('passwordSalt' in joined,false);
+  assert.equal(s.rooms.rows[1][1].includes('2468'),false);
+  for(let i=0;i<5;i++)s.call('unlock',{code:a.room.code,pin:'wrong'});
+  assert.match(s.call('unlock',{code:a.room.code,pin:'2468'}).error,/1분/);
 });
