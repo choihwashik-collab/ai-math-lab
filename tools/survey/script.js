@@ -1,10 +1,127 @@
-(()=>{const $=s=>document.querySelector(s),views=['home','builder','teacher','student'],PREFIX='aimath-survey-room-',DAY=86400000;let room=null,studentName='',timer=0;const id=()=>crypto.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2),key=c=>PREFIX+c,load=c=>{try{return JSON.parse(localStorage.getItem(key(c)))}catch{return null}},save=r=>{localStorage.setItem(key(r.code),JSON.stringify(r));room=r},show=n=>views.forEach(v=>$(`#${v}-view`).hidden=v!==n),cleanup=()=>{Object.keys(localStorage).filter(k=>k.startsWith(PREFIX)).forEach(k=>{const r=JSON.parse(localStorage.getItem(k));if(r.expiresAt&&Date.now()>r.expiresAt)localStorage.removeItem(k)})};
-function question(type='choice',text=''){return{id:id(),type,text,options:type==='choice'?['매우 그렇다','그렇다','아니다']:[]}}function renderBuilder(){const box=$('#question-list');box.innerHTML='';room.questions.forEach((q,i)=>{const el=document.createElement('div');el.className='question-card';el.innerHTML=`<span class="type">${q.type==='choice'?'객관식':'단답형'} · QUESTION ${i+1}</span><button class="remove" type="button">삭제</button><input class="qtext" value="${esc(q.text)}" placeholder="질문을 입력하세요">${q.type==='choice'?`<div class="options">${q.options.map((o,j)=>`<input data-option="${j}" value="${esc(o)}" placeholder="선택지 ${j+1}">`).join('')}</div>`:''}`;el.querySelector('.remove').onclick=()=>{room.questions.splice(i,1);renderBuilder()};el.querySelector('.qtext').oninput=e=>q.text=e.target.value;el.querySelectorAll('[data-option]').forEach(x=>x.oninput=e=>q.options[Number(e.target.dataset.option)]=e.target.value);box.append(el)})}const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function newBuilder(){room={questions:[question('choice','오늘 수업 내용을 이해했나요?'),question('text','가장 기억에 남는 내용을 한 문장으로 적어 보세요.')]};renderBuilder();show('builder')}function createRoom(){const title=$('#survey-title').value.trim(),valid=room.questions.filter(q=>q.text.trim()).map(q=>({...q,options:q.options.filter(Boolean)}));if(!title||!valid.length)return;let code;do{code=String(Math.floor(100000+Math.random()*900000))}while(load(code));room={code,title,questions:valid,responses:[],status:'open',createdAt:Date.now(),expiresAt:null};save(room);openTeacher()}
-function join(){const code=$('#join-code').value.trim(),name=$('#join-name').value.trim(),r=load(code);if(!r||r.status!=='open'){$('#join-error').textContent='열려 있는 설문방을 찾지 못했습니다.';return}if(!name){$('#join-error').textContent='이름 또는 별명을 입력해 주세요.';return}room=r;studentName=name;history.replaceState(null,'',`?room=${code}&mode=student`);renderStudent();show('student')}
-function renderStudent(){room=load(room.code)||room;$('#student-title').textContent=room.title;$('#student-room-code').textContent=`ROOM ${room.code}`;const prior=room.responses.find(r=>r.name===studentName),box=$('#student-questions');box.innerHTML='';room.questions.forEach((q,i)=>{const old=prior?.answers?.[q.id]||'',el=document.createElement('div');el.className='student-question';el.innerHTML=`<h3>${i+1}. ${esc(q.text)}</h3>${q.type==='choice'?q.options.map(o=>`<label class="choice-label"><input type="radio" name="${q.id}" value="${esc(o)}" ${old===o?'checked':''} required><span>${esc(o)}</span></label>`).join(''):`<input name="${q.id}" value="${esc(old)}" placeholder="답변을 입력하세요" required>`}`;box.append(el)});$('#response-form').hidden=false;$('#submitted').hidden=true}
-function submit(e){e.preventDefault();room=load(room.code);if(!room||room.status!=='open')return alert('종료된 설문입니다.');const data=new FormData(e.target),answers={};room.questions.forEach(q=>answers[q.id]=String(data.get(q.id)||''));const existing=room.responses.findIndex(r=>r.name===studentName),response={id:existing>=0?room.responses[existing].id:id(),name:studentName,answers,submittedAt:Date.now()};existing>=0?room.responses[existing]=response:room.responses.push(response);save(room);$('#response-form').hidden=true;$('#submitted').hidden=false}
-function openTeacher(){show('teacher');$('#teacher-title').textContent=room.title;$('#room-code').textContent=room.code;const url=new URL(location.href);url.search='';url.searchParams.set('room',room.code);url.searchParams.set('mode','student');$('#qrcode').innerHTML='';if(window.QRCode)new QRCode($('#qrcode'),{text:url.href,width:150,height:150,colorDark:'#172139',colorLight:'#ffffff'});renderResults();clearInterval(timer);timer=setInterval(()=>{const fresh=load(room.code);if(fresh){room=fresh;renderResults()}},1000)}
-function renderResults(){if(!room)return;$('#response-count').textContent=room.responses.length;$('#room-status').textContent=room.status==='open'?'응답 받는 중':'설문 종료';$('#end-room').disabled=room.status!=='open';$('#delete-notice').textContent=room.expiresAt?`응답은 ${new Date(room.expiresAt).toLocaleString('ko-KR')}에 자동 삭제됩니다.`:'설문 종료 후 24시간 동안 결과를 확인할 수 있습니다.';const box=$('#results-list');box.innerHTML='';room.questions.forEach((q,i)=>{const vals=room.responses.map(r=>r.answers[q.id]).filter(Boolean),el=document.createElement('article');el.className='result-card';let body;if(q.type==='choice'){const counts=q.options.map(o=>[o,vals.filter(v=>v===o).length]),max=Math.max(1,...counts.map(x=>x[1]));body=counts.map(([o,c])=>`<div class="bar"><span>${esc(o)}</span><div class="track"><div class="fill" style="width:${c/max*100}%"></div></div><b>${c}</b></div>`).join('')}else body=`<div class="text-answers">${vals.length?vals.map(v=>`<span>${esc(v)}</span>`).join(''):'<span>아직 답변이 없습니다.</span>'}</div>`;el.innerHTML=`<h3>${i+1}. ${esc(q.text)} <small>(${vals.length}명)</small></h3>${body}`;box.append(el)})}
-function endRoom(){room.status='closed';room.expiresAt=Date.now()+DAY;save(room);renderResults()}function deleteRoom(){if(!confirm('설문과 모든 답변을 지금 삭제할까요? 삭제 후 복구할 수 없습니다.'))return;localStorage.removeItem(key(room.code));clearInterval(timer);history.replaceState(null,'',location.pathname);room=null;show('home')}
-$('#open-builder').onclick=newBuilder;document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>show('home'));$('#add-choice').onclick=()=>{room.questions.push(question('choice'));renderBuilder()};$('#add-text').onclick=()=>{room.questions.push(question('text'));renderBuilder()};$('#create-room').onclick=createRoom;$('#join-room').onclick=join;$('#response-form').onsubmit=submit;$('#answer-again').onclick=renderStudent;$('#end-room').onclick=endRoom;$('#delete-room').onclick=deleteRoom;$('#copy-link').onclick=async()=>{const u=new URL(location.href);u.search='';u.searchParams.set('room',room.code);u.searchParams.set('mode','student');await navigator.clipboard.writeText(u.href);$('#copy-link').textContent='복사됨 ✓'};$('#add-live').onclick=()=>{const text=$('#live-question').value.trim();if(!text||room.status!=='open')return;room.questions.push(question('text',text));save(room);$('#live-question').value='';renderResults()};addEventListener('storage',e=>{if(room&&e.key===key(room.code)){const fresh=load(room.code);if(fresh){room=fresh;room.status==='open'&&document.querySelector('#student-view:not([hidden])')&&renderStudent();renderResults()}}});cleanup();const params=new URLSearchParams(location.search),code=params.get('room');if(code&&params.get('mode')==='student'){$('#join-code').value=code;show('home')}else show('home')})();
+(() => {
+  'use strict';
+  const $ = s => document.querySelector(s), views = ['home','builder','teacher','student'];
+  const hosted = !!window.google?.script?.run, config = window.SURVEY_CONFIG || {};
+  const uid = () => crypto.randomUUID();
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const memory = new Map();
+  const read = k => { try { return localStorage.getItem(k) || memory.get(k); } catch { return memory.get(k); } };
+  const store = (k,v) => { memory.set(k,v); try { localStorage.setItem(k,v); } catch {} };
+  let room, ownerToken = '', studentName = '', participantId = '', responses = [], timer, view = 'home', polling = false;
+  const notice = text => $('#connection-status').textContent = text;
+  function show(next) { view = next; views.forEach(v => $(`#${v}-view`).hidden = v !== view); clearTimeout(timer); schedule(); }
+  function rpc(action, data = {}) {
+    return new Promise((resolve,reject) => {
+      if (!hosted) return reject(new Error('설문 서버가 아직 연결되지 않았습니다.'));
+      google.script.run.withSuccessHandler(r => r?.ok ? resolve(r.data) : reject(new Error(r?.error || '서버 응답 오류입니다.')))
+        .withFailureHandler(() => reject(new Error('서버 연결에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.')))
+        .surveyApi({ action, ...data });
+    });
+  }
+  const request = (action,data) => rpc(action,{code:room.code,ownerToken,...data});
+  function action(selector, fn) {
+    const button = $(selector);
+    button.addEventListener('click',async () => {
+      if (button.disabled) return; button.disabled = true; notice('처리 중…');
+      try { await fn(); notice(''); } catch(e) { notice(e.message); }
+      finally { button.disabled = false; if (room?.status === 'closed') $('#end-room').disabled = $('#add-live').disabled = true; }
+    });
+  }
+  function question(type='choice',text='') { return {id:uid(),type,text,options:type==='choice'?['매우 그렇다','그렇다','아니다']:[]}; }
+  function renderBuilder() {
+    const box=$('#question-list'); box.innerHTML='';
+    room.questions.forEach((q,i) => {
+      const el=document.createElement('div'); el.className='question-card';
+      el.innerHTML=`<span class="type">${q.type==='choice'?'객관식':'단답형'} · QUESTION ${i+1}</span><button class="remove" type="button">삭제</button><input class="qtext" maxlength="500" value="${esc(q.text)}" placeholder="질문을 입력하세요">${q.type==='choice'?`<div class="options">${q.options.map((o,j)=>`<input data-option="${j}" maxlength="200" value="${esc(o)}" placeholder="선택지 ${j+1}">`).join('')}</div>`:''}`;
+      el.querySelector('.remove').onclick=()=>{room.questions.splice(i,1);renderBuilder();};
+      el.querySelector('.qtext').oninput=e=>q.text=e.target.value;
+      el.querySelectorAll('[data-option]').forEach(x=>x.oninput=e=>q.options[Number(e.target.dataset.option)]=e.target.value);
+      box.append(el);
+    });
+  }
+  function link(management=false) {
+    const url=new URL(config.appUrl); url.search='';url.hash='';
+    url.searchParams.set('room',room.code);url.searchParams.set('mode',management?'teacher':'student');
+    if(management)url.hash=new URLSearchParams({token:ownerToken}).toString();
+    return url.href;
+  }
+  async function copy(text) { try {await navigator.clipboard.writeText(text);} catch {window.prompt('아래 링크를 복사해 주세요.',text);} }
+  function renderTeacher() {
+    $('#teacher-title').textContent=room.title;$('#room-code').textContent=room.code;
+    $('#participant-link').href=link();$('#qrcode').innerHTML='';
+    try {if(!window.QRCode)throw new Error('QR 생성기를 불러오지 못했습니다. 참여 링크를 공유해 주세요.');
+      new QRCode($('#qrcode'),{text:link(),width:180,height:180,colorDark:'#172139',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){$('#qrcode').textContent=e.message;}
+    renderResults();
+  }
+  function renderResults() {
+    $('#response-count').textContent=responses.length;$('#room-status').textContent=room.status==='open'?'응답 받는 중':'설문 종료';
+    $('#end-room').disabled=$('#add-live').disabled=room.status!=='open';
+    $('#delete-notice').textContent=room.expiresAt?`${new Date(room.expiresAt).toLocaleString('ko-KR')}부터 입장·조회가 차단되며 저장된 응답은 1시간 이내 정리됩니다.`:'종료 후 24시간까지 결과를 조회할 수 있습니다. 교사용 관리 링크는 참여자에게 공유하지 마세요.';
+    const box=$('#results-list');box.innerHTML='';
+    room.questions.forEach((q,i)=>{
+      const vals=responses.map(r=>r.answers[q.id]).filter(Boolean),el=document.createElement('article');el.className='result-card';
+      const counts=q.options.map(o=>[o,vals.filter(v=>v===o).length]),max=Math.max(1,...counts.map(x=>x[1]));
+      const body=q.type==='choice'?counts.map(([o,c])=>`<div class="bar"><span>${esc(o)}</span><div class="track"><div class="fill" style="width:${c/max*100}%"></div></div><b>${c}</b></div>`).join(''):`<div class="text-answers">${vals.length?vals.map(v=>`<span>${esc(v)}</span>`).join(''):'<span>아직 답변이 없습니다.</span>'}</div>`;
+      el.innerHTML=`<h3>${i+1}. ${esc(q.text)} <small>(${vals.length}명)</small></h3>${body}`;box.append(el);
+    });
+  }
+  const drafts=()=>Object.fromEntries(new FormData($('#response-form')).entries());
+  function renderStudent(previous={}) {
+    $('#student-title').textContent=room.title;$('#student-room-code').textContent=`ROOM ${room.code}`;
+    const box=$('#student-questions');box.innerHTML='';
+    room.questions.forEach((q,i)=>{
+      const old=previous[q.id]||'',el=document.createElement('div');el.className='student-question';
+      el.innerHTML=`<h3>${i+1}. ${esc(q.text)}</h3>${q.type==='choice'?q.options.map(o=>`<label class="choice-label"><input type="radio" name="${q.id}" value="${esc(o)}" ${old===o?'checked':''} required><span>${esc(o)}</span></label>`).join(''):`<input name="${q.id}" maxlength="1000" value="${esc(old)}" placeholder="답변을 입력하세요" required>`}`;box.append(el);
+    });
+    $('#response-form').hidden=false;$('#submitted').hidden=true;$('#response-form button').disabled=room.status!=='open';
+  }
+  function schedule() {clearTimeout(timer);if(room?.status==='open'&&['teacher','student'].includes(view))timer=setTimeout(poll,view==='teacher'?7000:15000);}
+  async function poll() {
+    if(polling||!room||!['teacher','student'].includes(view))return;
+    if(document.hidden){schedule();return;}polling=true;const oldView=view,code=room.code;
+    try {
+      const data=await request(view==='teacher'?'results':'refresh');if(view!==oldView||room?.code!==code)return;
+      const changed=data.room.revision!==room.revision;room=data.room;
+      if(view==='teacher'){responses=data.responses;renderResults();}
+      else if(changed){renderStudent(drafts());notice('새 질문이 추가되었습니다. 기존 답변은 유지했습니다.');}
+      if(room.status==='closed'&&view==='student'){$('#response-form button').disabled=true;notice('설문이 종료되었습니다.');}
+    }catch(e){notice(e.message);}finally{polling=false;if(view===oldView&&room?.code===code)schedule();}
+  }
+  action('#open-builder',async()=>{if(!hosted)throw new Error('설문 서버가 아직 연결되지 않았습니다.');ownerToken='';responses=[];room={questions:[question('choice','오늘 연수 내용을 이해했나요?'),question('text','가장 기억에 남는 내용을 한 문장으로 적어 보세요.')]};renderBuilder();show('builder');});
+  document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>show('home'));
+  for(const [selector,type] of [['#add-choice','choice'],['#add-text','text']])action(selector,async()=>{if(room.questions.length>=30)throw new Error('질문은 최대 30개입니다.');room.questions.push(question(type));renderBuilder();});
+  action('#create-room',async()=>{
+    const title=$('#survey-title').value.trim();if(!title||!room.questions.length||room.questions.some(q=>!q.text.trim()))throw new Error('제목과 모든 질문을 작성해 주세요.');
+    const data=await rpc('create',{title,questions:room.questions,pin:$('#creator-pin').value});room=data.room;ownerToken=data.ownerToken;responses=[];
+    store(`survey-owner-${room.code}`,ownerToken);$('#creator-pin').value='';renderTeacher();show('teacher');
+  });
+  action('#join-room',async()=>{
+    const code=$('#join-code').value.trim(),name=$('#join-name').value.trim();
+    if(!/^\d{6}$/.test(code))throw new Error('6자리 방 번호를 입력해 주세요.');if(!name)throw new Error('이름 또는 별명을 입력해 주세요.');
+    const data=await rpc('join',{code});if(data.room.status!=='open')throw new Error('종료된 설문입니다.');
+    room=data.room;studentName=name;participantId=read(`survey-participant-${code}`)||uid()+uid();store(`survey-participant-${code}`,participantId);renderStudent();show('student');
+  });
+  $('#response-form').onsubmit=async e=>{
+    e.preventDefault();const button=e.target.querySelector('button');button.disabled=true;notice('답변을 제출하는 중…');
+    try{await request('submit',{participantId,name:studentName,answers:drafts(),revision:room.revision});$('#response-form').hidden=true;$('#submitted').hidden=false;notice('');}
+    catch(error){notice(error.message);await poll();}finally{button.disabled=room?.status!=='open';}
+  };
+  action('#answer-again',async()=>{const answers=drafts(),data=await request('refresh');room=data.room;if(room.status!=='open')throw new Error('종료된 설문입니다.');renderStudent(answers);});
+  action('#copy-link',()=>copy(link()));action('#copy-management',()=>copy(link(true)));
+  action('#end-room',async()=>{const data=await request('close');room=data.room;renderResults();clearTimeout(timer);});
+  action('#delete-room',async()=>{if(!confirm('이 설문방과 모든 응답을 삭제할까요? 복구할 수 없습니다.'))return;await request('delete');room=null;ownerToken='';responses=[];show('home');});
+  action('#add-live',async()=>{const text=$('#live-question').value.trim();if(!text)throw new Error('추가할 질문을 입력해 주세요.');const data=await request('addQuestion',{text});room=data.room;$('#live-question').value='';renderResults();});
+  async function initialize() {
+    if(!hosted){
+      if(/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(config.appUrl||'')){const dest=new URL(config.appUrl);dest.search=location.search;dest.hash=location.hash;location.replace(dest.href);return;}
+      $('#open-builder').disabled=$('#join-room').disabled=true;notice('설문 서버 연결을 준비 중입니다. 기존 브라우저에만 저장된 설문방은 휴대폰에서 입장할 수 없습니다.');show('home');return;
+    }
+    const initial=await new Promise(resolve=>google.script.url.getLocation(resolve));
+    const code=config.initialRoom||initial.parameter.room,mode=config.initialMode||initial.parameter.mode;show('home');if(!code)return;
+    $('#join-code').value=code;
+    if(mode==='teacher'){ownerToken=new URLSearchParams(initial.hash).get('token')||read(`survey-owner-${code}`)||'';const data=await rpc('results',{code,ownerToken});room=data.room;responses=data.responses;store(`survey-owner-${code}`,ownerToken);renderTeacher();show('teacher');}
+    else {const data=await rpc('join',{code});if(data.room.status!=='open')throw new Error('종료된 설문입니다.');notice(`${data.room.title} — 이름 또는 별명을 입력하면 참여할 수 있습니다.`);$('#join-name').focus();}
+  }
+  initialize().catch(e=>notice(e.message));
+})();
